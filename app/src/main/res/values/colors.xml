@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Indigo -->
+    <color name="indigo">#3F51B5</color>
+    <color name="indigo_dark">#303F9F</color>
+    <color name="indigo_light">#5C6BC0</color>
+
+    <!-- Secondary Cyan -->
+    <color name="cyan">#00BCD4</color>
+    <color name="cyan_dark">#0097A7</color>
+    <color name="cyan_light">#4DD0E1</color>
+
+    <!-- Tertiary Amber -->
+    <color name="amber">#FFC107</color>
+    <color name="amber_dark">#FFA000</color>
+    <color name="amber_light">#FFE082</color>
+
+    <!-- Neutral -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="grey_50">#FFFAFAFA</color>
+    <color name="grey_100">#FFF5F5F5</color>
+    <color name="grey_900">#FF212121</color>
+</resources>
