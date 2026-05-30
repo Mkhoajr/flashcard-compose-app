@@ -14,7 +14,7 @@ class FlashcardRepository(private val apiService: FlashcardApiService) {
                 val flashcards = response.body()?.map { dto ->
                     Flashcard(
                         id = dto.id,
-                        unit = dto.unit,
+                        unit = dto.unit?: "",
                         word = dto.word,
                         reading = dto.reading,
                         meaning = dto.meaning,

@@ -133,7 +133,6 @@ fun DeckCompletedScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                // Đổi thành QuizletSecondaryBtn để giống nền tối trong ảnh
                 colors = ButtonDefaults.buttonColors(containerColor = QuizletSecondaryBtn),
                 shape = RoundedCornerShape(50)
             ) {
@@ -256,8 +255,8 @@ fun MasteryDonutChart(
 @Composable
 fun DeckCompletedScreenPreview() {
     DeckCompletedScreen(
-        knewCount = 16,
-        stillLearningCount = 24,
+        knewCount = 1,
+        stillLearningCount = 0,
         onPracticeClick = { },
         onRestartAll = { },
         onFocusStillLearning = { },

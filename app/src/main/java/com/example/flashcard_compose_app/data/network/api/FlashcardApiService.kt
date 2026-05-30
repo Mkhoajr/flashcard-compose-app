@@ -11,7 +11,7 @@ import retrofit2.http.Query
 
 interface FlashcardApiService {
 
-    @GET("decks/{deckId}/flashcards")
+    @GET("flashcards/deck/{deckId}")
     suspend fun getFlashcards(
         @Path("deckId") deckId: Int,
         @Query("userId") userId: Int,

@@ -11,6 +11,10 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object About : Screen("about")
     object Profile : Screen("profile")
+
+    object UnitManager : Screen("unit_manager/{deckId}?unitTitle={unitTitle}&isUnit={isUnit}") {
+        fun createRoute(deckId: Int?, unitTitle: String, isUnit: Boolean): String {
+            return "unit_manager/$deckId?unitTitle=${android.net.Uri.encode(unitTitle)}&isUnit=$isUnit"
+        }
+    }
 }
-
-

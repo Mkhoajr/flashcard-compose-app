@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -14,9 +13,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.flashcard_compose_app.domain.model.Deck
 import com.example.flashcard_compose_app.domain.model.RecentDeck
 import com.example.flashcard_compose_app.ui.components.*
+import com.example.flashcard_compose_app.ui.navigation.Screen
 import com.example.flashcard_compose_app.ui.viewmodels.AppViewModelProvider
 import com.example.flashcard_compose_app.ui.viewmodels.HomeViewModel
 
@@ -97,25 +98,72 @@ fun HomeScreen(
                 onDeckClick = { clickedDeck ->
                     if (clickedDeck.isUnit) {
 
-                        // Use for API ("Unit1")
-                        val formattedUnitId = clickedDeck.title
-                            .replace(" ", "")
-                            .replace("Unit0", "Unit")
-
-                        // Use for UI ("Unit 01")
+                        // 1. Chuẩn bị Tên hiển thị chung cho cả 2 luồng
                         val displayUnitTitle = clickedDeck.title
+                        val safeUnitTitle = Uri.encode(displayUnitTitle)
 
                         val parentDeck = decks.find { it.id == clickedDeck.parentId }
                         val deckName = parentDeck?.title ?: "Default Deck"
-
                         val safeDeckName = Uri.encode(deckName)
-                        val safeUnitTitle = Uri.encode(displayUnitTitle)
 
-                        navController.navigate("flashcard_screen/${clickedDeck.parentId}?unitId=$formattedUnitId&deckName=$safeDeckName&unitTitle=$safeUnitTitle")
+                        // 2. BỘ LỌC THÔNG MINH (Phân luồng Cũ - Mới)
+                        // ID sinh ảo từ JSON thường rất to (> 1 triệu) hoặc bằng 0
+                        val isLegacyVirtualDeck = clickedDeck.id == 0 || clickedDeck.id > 1000000
 
-                        println("DEBUG: Navigating to FlashcardScreen for ${clickedDeck.totalCards} cards - API Unit: $formattedUnitId, UI Unit: $displayUnitTitle, DeckName: $deckName")
+                        if (isLegacyVirtualDeck) {
+                            // ---> LUỒNG 1: DÀNH CHO NEJ (Dữ liệu cũ) <---
+                            val formattedUnitId = clickedDeck.title
+                                .replace(" ", "")
+                                .replace("Unit0", "Unit") // Tạo chữ "Unit1"
+
+                            val parentId = clickedDeck.parentId // Lấy ID cha (VD: 16)
+
+                            // Truyền parentId và có kèm theo unitId
+                            navController.navigate("flashcard_screen/$parentId?unitId=$formattedUnitId&deckName=$safeDeckName&unitTitle=$safeUnitTitle")
+
+                            println("DEBUG: Đi luồng CŨ (NEJ) - API Unit: $formattedUnitId, Cha ID: $parentId")
+
+                        } else {
+                            // ---> LUỒNG 2: DÀNH CHO TEST UNIT (Kiến trúc mới) <---
+                            val targetUnitId = clickedDeck.id // Lấy thẳng ID của chính nó (VD: 18)
+
+                            // Chỉ truyền targetUnitId, KHÔNG TRUYỀN unitId (để Backend tự bắt được null)
+                            navController.navigate("flashcard_screen/$targetUnitId?deckName=$safeDeckName&unitTitle=$safeUnitTitle")
+
+                            println("DEBUG: Đi luồng MỚI (Test Unit) - Unit ID: $targetUnitId")
+                        }
+
                     } else {
                         viewModel.onDeckClicked(clickedDeck)
+                    }
+                },
+                onEditClick = { /* TODO */ },
+                onDeleteClick = { /* TODO */ },
+                onAddUnitClick = { /* TODO */ },
+                onManageVocabClick = { clickedUnit ->
+                    // Tái sử dụng lại logic check ID ảo của bạn
+                    val isLegacyVirtualDeck = clickedUnit.id == 0 || clickedUnit.id > 1000000
+
+                    if (isLegacyVirtualDeck) {
+                        // ---> LUỒNG 1: DỮ LIỆU CŨ (NEJ) <---
+                        // Truyền ID cha (parentId) và báo isUnit = true để API lấy tên Unit đi lọc
+                        navController.navigate(
+                            Screen.UnitManager.createRoute(
+                                deckId = clickedUnit.parentId,
+                                unitTitle = clickedUnit.title,
+                                isUnit = true
+                            )
+                        )
+                    } else {
+                        // ---> LUỒNG 2: DỮ LIỆU MỚI TẠO <---
+                        // Truyền ID của chính nó và báo isUnit = false để API load toàn bộ thẻ
+                        navController.navigate(
+                            Screen.UnitManager.createRoute(
+                                deckId = clickedUnit.id,
+                                unitTitle = clickedUnit.title,
+                                isUnit = false
+                            )
+                        )
                     }
                 }
             )
@@ -126,7 +174,8 @@ fun HomeScreen(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen(navController = NavController(LocalContext.current),
-        userName = "Alice Preview"
+    HomeScreen(
+        navController = rememberNavController(),
+        userName = "Alice"
     )
 }

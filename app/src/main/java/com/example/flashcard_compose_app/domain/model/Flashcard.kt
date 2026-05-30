@@ -8,5 +8,7 @@ data class Flashcard(
     val meaning: String,
     val imagePath: String?, // Maybe null
     val audioPath: String?, // Maybe null
+    val isFavourite: Boolean? = false,
+    val orderIndex: Int? = 0,
     val status: String
 )

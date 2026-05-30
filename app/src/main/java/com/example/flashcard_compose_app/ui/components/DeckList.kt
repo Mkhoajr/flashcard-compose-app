@@ -15,7 +15,15 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.draw.rotate
@@ -25,21 +33,26 @@ import com.example.flashcard_compose_app.domain.model.Deck
 @Composable
 fun DeckList(
     decks: List<Deck>,
-    expandedIds: Set<Int>, // Opening state of each deck by id
+    expandedIds: Set<Int>,
     onDeckClick: (Deck) -> Unit,
+    onEditClick: (Deck) -> Unit,
+    onDeleteClick: (Deck) -> Unit,
+    onAddUnitClick: (Deck) -> Unit,
+    onManageVocabClick: (Deck) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
+        modifier = modifier.fillMaxSize().padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Provide a root parentKey to build unique keys for each item in the recursive tree
         deckTree(
             decks = decks,
             expandedIds = expandedIds,
             onDeckClick = onDeckClick,
+            onEditClick = onEditClick,         // Nối cáp
+            onDeleteClick = onDeleteClick,     // Nối cáp
+            onAddUnitClick = onAddUnitClick,   // Nối cáp
+            onManageVocabClick = onManageVocabClick,
             depth = 0,
             parentKey = "root"
         )
@@ -50,30 +63,39 @@ fun LazyListScope.deckTree(
     decks: List<Deck>,
     expandedIds: Set<Int>,
     onDeckClick: (Deck) -> Unit,
+    onEditClick: (Deck) -> Unit,       // Nối cáp
+    onDeleteClick: (Deck) -> Unit,     // Nối cáp
+    onAddUnitClick: (Deck) -> Unit,    // Nối cáp
+    onManageVocabClick: (Deck) -> Unit,
     depth: Int,
     parentKey: String = ""
 ) {
     decks.forEach { deck ->
-        // Draw current deck item
-        // Use a path-like parentKey + id to guarantee uniqueness across the whole list
         val itemKey = "$parentKey/${deck.id}"
         item(key = itemKey) {
             val isExpanded = expandedIds.contains(deck.id)
             DeckItem(
                 deck = deck,
                 isExpanded = isExpanded,
-                depth = depth, // Pass depth to DeckItem for indentation
-                onDeckClick = onDeckClick
+                depth = depth,
+                onDeckClick = onDeckClick,
+                onEditClick = onEditClick, // Pass to DeckItem
+                onDeleteClick = onDeleteClick,
+                onAddUnitClick = onAddUnitClick,
+                onManageVocabClick = onManageVocabClick
             )
         }
 
-        // If this deck is expanded and has sub-decks, recursively draw them
         if (expandedIds.contains(deck.id) && deck.subDecks.isNotEmpty()) {
             deckTree(
                 decks = deck.subDecks,
                 expandedIds = expandedIds,
                 onDeckClick = onDeckClick,
-                depth = depth + 1, // Increase depth for sub-decks
+                onEditClick = onEditClick,      // Recursive
+                onDeleteClick = onDeleteClick,
+                onAddUnitClick = onAddUnitClick,
+                onManageVocabClick = onManageVocabClick,
+                depth = depth + 1,
                 parentKey = itemKey
             )
         }
@@ -86,12 +108,20 @@ fun DeckItem(
     deck: Deck,
     isExpanded: Boolean = false,
     depth: Int = 0,
-    onDeckClick: (Deck) -> Unit
+    onDeckClick: (Deck) -> Unit,
+    // 🟢 THÊM 3 CALLBACK MỚI ĐỂ ĐẨY SỰ KIỆN LÊN MÀN HÌNH CHÍNH
+    onEditClick: (Deck) -> Unit,
+    onDeleteClick: (Deck) -> Unit,
+    onAddUnitClick: (Deck) -> Unit,
+    onManageVocabClick: (Deck) -> Unit
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 90f else 0f,
         label = "ArrowRotation"
     )
+
+    // Menu state
+    var expandedMenu by remember { mutableStateOf(false) }
 
     val isChild = depth > 0
     val cardElevation = if (isChild) 0.dp else 4.dp
@@ -105,14 +135,13 @@ fun DeckItem(
         onClick = { onDeckClick(deck) },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = (depth * 16).dp), // Indent
+            .padding(start = (depth * 16).dp),
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = cardElevation),
         colors = CardDefaults.cardColors(containerColor = cardColor)
     ) {
         Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
 
-            // If this is a child card, show a vertical colored bar on the left to indicate hierarchy
             if (isChild) {
                 Box(
                     modifier = Modifier
@@ -125,9 +154,17 @@ fun DeckItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    Icon(
+                        imageVector = if (deck.isUnit) Icons.Default.Menu else Icons.Default.Folder,
+                        contentDescription = "Loại thẻ",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
@@ -155,7 +192,6 @@ fun DeckItem(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        // Check if this deck has sub-decks to decide which icon to show
                         if (deck.isUnit) {
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
@@ -167,8 +203,62 @@ fun DeckItem(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = "Open Sub-Decks",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.rotate(rotation) // Apply rotate
+                                modifier = Modifier.rotate(rotation)
                             )
+                        }
+
+                        // Menu icon display on the rightmost side
+                        Box {
+                            IconButton(
+                                onClick = { expandedMenu = true },
+                                modifier = Modifier.size(32.dp).padding(start = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Options",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = expandedMenu,
+                                onDismissRequest = { expandedMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Modify Deck") },
+                                    onClick = { expandedMenu = false; onEditClick(deck) },
+                                    leadingIcon = { Icon(Icons.Default.Edit, "Edit") }
+                                )
+
+                                // Just show Manage Vocabulary option if this is a Unit (not a Deck)
+                                if (deck.isUnit) {
+                                    DropdownMenuItem(
+                                        text = { Text("Manage Flashcards") },
+                                        onClick = {
+                                            expandedMenu = false
+                                            onManageVocabClick(deck)
+                                        },
+                                        leadingIcon = { Icon(Icons.Default.List, "Manage") }
+                                    )
+                                }
+
+                                // Just show Add Deck option if this is a Deck (not a Unit), since Units can't have sub-decks
+                                if (!deck.isUnit) {
+                                    DropdownMenuItem(
+                                        text = { Text("Add Deck") },
+                                        onClick = { expandedMenu = false; onAddUnitClick(deck) },
+                                        leadingIcon = { Icon(Icons.Default.Add, "Insert") }
+                                    )
+                                }
+
+                                HorizontalDivider()
+
+                                DropdownMenuItem(
+                                    text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                    onClick = { expandedMenu = false; onDeleteClick(deck) },
+                                    leadingIcon = { Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error) }
+                                )
+                            }
                         }
                     }
                 }
@@ -198,5 +288,13 @@ fun DeckListPreview() {
         Deck(id = 4, title = "Musicians", author = "Music Guru", learnedCards = 0, totalCards = 76),
         Deck(id = 5, title = "Vocal Workout", author = "Voice Coach", learnedCards = 0, totalCards = 68)
     )
-    DeckList(decks = sampleDecks, expandedIds = setOf(0), onDeckClick = {})
+    DeckList(
+        decks = sampleDecks,
+        expandedIds = setOf(0),
+        onDeckClick = {},
+        onEditClick = {},
+        onDeleteClick = {},
+        onAddUnitClick = {},
+        onManageVocabClick = {}
+    )
 }

@@ -1,9 +1,15 @@
 package com.example.flashcard_compose_app.ui.navigation
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
@@ -13,6 +19,10 @@ import com.example.flashcard_compose_app.ui.screens.FlashcardScreen
 import com.example.flashcard_compose_app.ui.screens.HomeScreen
 import com.example.flashcard_compose_app.ui.screens.LoginScreen
 import com.example.flashcard_compose_app.ui.screens.RegisterScreen
+import com.example.flashcard_compose_app.ui.screens.UnitManagerScreen
+import com.example.flashcard_compose_app.ui.viewmodels.AppViewModelProvider
+import com.example.flashcard_compose_app.ui.viewmodels.UnitManagerViewModel
+import com.example.flashcard_compose_app.ui.viewmodels.UnitUiState
 
 @Composable
 fun NavGraph() {
@@ -42,9 +52,82 @@ fun NavGraph() {
             MainAppLayout(navController = navController, authManager = authManager) { innerPadding ->
                 HomeScreen(
                     navController = navController,
-                    userName = authManager.getUserName() ?: "Unknow User",
+                    userName = authManager.getUserName() ?: "Unknown User",
                     modifier = Modifier.padding(innerPadding)
                 )
+            }
+        }
+
+        composable(
+            route = Screen.UnitManager.route,
+            arguments = listOf(
+                navArgument("deckId") { type = NavType.IntType },
+                navArgument("unitTitle") { type = NavType.StringType; nullable = true },
+                navArgument("isUnit") { type = NavType.BoolType; defaultValue = false }
+            )
+        ) { backStackEntry ->
+
+            val deckId = backStackEntry.arguments?.getInt("deckId") ?: 0
+            val unitTitle = backStackEntry.arguments?.getString("unitTitle") ?: "Unit Title"
+            val isUnit = backStackEntry.arguments?.getBoolean("isUnit") ?: false
+
+            val viewModel: UnitManagerViewModel = viewModel(
+                factory = AppViewModelProvider.UnitManagerFactory
+            )
+
+            val uiState by viewModel.uiState.collectAsState()
+
+            val context = LocalContext.current
+            val authManager = AuthManager(context)
+
+            LaunchedEffect(deckId) {
+
+                val userId = authManager.getUserId()?.toIntOrNull() ?: 0
+
+                println("DEBUG: UnitManager loading with deckId=$deckId, unitTitle=$unitTitle, isUnit=$isUnit")
+
+                val finalUnitTitle = if (isUnit) {
+                    // If it's a regular unit (e.g., "Unit 01"), we can clean it up to just "Unit01" or "Unit1" to match backend expectations
+                    unitTitle
+                        .replace(" ", "")
+                        .replace("Unit0", "Unit")
+                } else {
+                    // If it's not a unit (e.g., virtual deck), we can pass an empty string or the original title based on your backend needs
+                    ""
+                }
+
+                println("DEBUG: Gọi API với deckId=$deckId, DB Unit=$finalUnitTitle")
+                viewModel.loadFlashcards(deckId, userId, finalUnitTitle)
+            }
+
+            when (val state = uiState) {
+
+                is UnitUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                is UnitUiState.Error -> {
+                    Text(text = "Error: ${state.message}")
+                }
+
+                is UnitUiState.Success -> {
+                    UnitManagerScreen(
+                        unitTitle = unitTitle,
+                        flashcards = state.flashcards,
+                        onNavigateBack = { navController.popBackStack() },
+                        onSaveFlashcard = { id, word, reading, meaning, img, audio ->
+                            // Logic gọi API lưu thẻ (nên gọi qua viewModel)
+                        },
+                        onDeleteFlashcard = { id ->
+                            // Logic gọi API xóa thẻ (nên gọi qua viewModel)
+                        }
+                    )
+                }
             }
         }
 

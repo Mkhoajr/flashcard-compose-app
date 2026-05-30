@@ -71,6 +71,7 @@ fun FlashcardScreen(
         DeckCompletedScreen(
             knewCount = learnedCount,
             stillLearningCount = stillLearningCount,
+            onPracticeClick = { },
             onRestartAll = { viewModel.restartAll() },
             onFocusStillLearning = { viewModel.focusOnStillLearning() },
             onBack = { navController.popBackStack() }
@@ -103,7 +104,6 @@ fun FlashcardScreen(
         onUndo = {
             viewModel.undoLastAction()
         },
-        canUndo = currentCardIndex > 0
     )
 }
 
@@ -125,7 +125,6 @@ fun FlashcardScreenContent(
     onNotLearned: () -> Unit,
     onLearned: () -> Unit,
     onUndo: () -> Unit,
-    canUndo: Boolean
 ) {
     if (isLoading) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -337,7 +336,7 @@ fun FlashcardContent(
     isFavorite: Boolean,
     onFavoriteToggle: () -> Unit
 ) {
-    // 1. Tối ưu Animation: Rút ngắn thời gian xuống 400ms và dùng Easing để lật dứt khoát hơn
+    // Optimize Animation: Reduce the time when flipped (400ms) and using Easing to flip more naturally
     val rotationY by animateFloatAsState(
         targetValue = if (isFlipped) 180f else 0f,
         animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
@@ -356,12 +355,12 @@ fun FlashcardContent(
             ) { onFlip() }
             .graphicsLayer {
                 this.rotationY = rotationY
-                // Tăng cameraDistance để thẻ lật 3D không bị lồi lõm méo mó
+                // Increase cameraDistance to flip 3D flashcard without distortion (default is 8, we can increase it to 12 or more)
                 cameraDistance = 12 * density
             }
     ) {
         // ==========================================
-        // MẶT TRƯỚC (Từ vựng + Icon)
+        // FRONT-SIDE (Vocab + Icon)
         // ==========================================
         Column(
             modifier = Modifier
@@ -373,7 +372,7 @@ fun FlashcardContent(
                 },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header: Các Icon Audio & Favorite
+            // Header: Audio Icon & Favorite
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -416,12 +415,29 @@ fun FlashcardContent(
                     textAlign = TextAlign.Center
                 )
             }
+
+            val wordLength = card.word.length
+            val wordFontSize = when {
+                wordLength > 15 -> 20.sp
+                wordLength > 10 -> 24.sp
+                else -> 32.sp
+            }
+            val wordLineHeight = when {
+                wordLength > 15 -> 28.sp
+                wordLength > 10 -> 32.sp
+                else -> 40.sp
+            }
+
             Text(
                 text = card.word,
-                fontSize = 32.sp,
+                fontSize = wordFontSize,
+                lineHeight = wordLineHeight,
                 fontWeight = FontWeight.Bold,
                 color = Indigo,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -435,21 +451,28 @@ fun FlashcardContent(
                 .fillMaxSize()
                 .padding(20.dp)
                 .graphicsLayer {
-                    // 1. Chỉ hiện Mặt sau khi góc xoay lớn hơn 90 độ
+                    // Just display behind side when rotationY > 90, otherwise hide it to prevent overlap with front side
                     alpha = if (rotationY > 90f) 1f else 0f
-                    // 2. Chống ngược chữ: Tự động lật ngược mặt sau lại 180 độ
+                    // Avoid mirror effect by flipping back when showing the behind side
                     this.rotationY = 180f
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            val meaningLength = card.meaning.length
+            val meaningFontSize = if (meaningLength > 20) 22.sp else 28.sp
+            val meaningLineHeight = if (meaningLength > 20) 30.sp else 36.sp
+
             Text(
                 text = card.meaning,
-                fontSize = 28.sp,
+                fontSize = meaningFontSize,
+                lineHeight = meaningLineHeight,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF333333),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
             )
         }
     }
@@ -469,8 +492,8 @@ fun FlashcardScreenPreviewContent() {
         currentCard = Flashcard(
             id = 1,
             unit = "Unit 1",
-            word = "こんにちは",
-            reading = "こんにちは",
+            word = "はじめまして、どうぞよろしくおねがいします",
+            reading = "はじめまして、どうぞよろしくおねがいします",
             meaning = "Hello",
             imagePath = null,
             audioPath = null,
@@ -487,6 +510,5 @@ fun FlashcardScreenPreviewContent() {
         onNotLearned = {},
         onLearned = {},
         onUndo = {},
-        canUndo = true
     )
 }

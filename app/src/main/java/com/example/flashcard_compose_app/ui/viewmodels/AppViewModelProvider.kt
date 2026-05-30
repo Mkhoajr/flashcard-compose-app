@@ -8,7 +8,6 @@ import com.example.flashcard_compose_app.data.AuthManager
 import com.example.flashcard_compose_app.data.network.RetrofitClient
 import com.example.flashcard_compose_app.data.repository.DeckRepository
 import com.example.flashcard_compose_app.data.repository.FlashcardRepository
-import com.example.flashcard_compose_app.domain.model.Flashcard
 
 object AppViewModelProvider {
     val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -25,6 +24,18 @@ object AppViewModelProvider {
             HomeViewModel(
                 repository = repository,
                 authManager = authManager
+            )
+        }
+    }
+
+    val UnitManagerFactory: ViewModelProvider.Factory = viewModelFactory {
+        initializer {
+
+            val apiService = RetrofitClient.flashcardApiService
+            val repository = FlashcardRepository(apiService)
+
+            UnitManagerViewModel(
+                repository = repository
             )
         }
     }
