@@ -52,12 +52,14 @@ fun NavGraph() {
             MainAppLayout(navController = navController, authManager = authManager) { innerPadding ->
                 HomeScreen(
                     navController = navController,
+                    userId = authManager.getUserId()?.toIntOrNull() ?: 0,
                     userName = authManager.getUserName() ?: "Unknown User",
                     modifier = Modifier.padding(innerPadding)
                 )
             }
         }
 
+        // Unit Manager Screen (for both regular units and virtual decks)
         composable(
             route = Screen.UnitManager.route,
             arguments = listOf(
@@ -80,55 +82,69 @@ fun NavGraph() {
             val context = LocalContext.current
             val authManager = AuthManager(context)
 
+            // 🟢 1. ĐƯA userId RA NGOÀI ĐỂ DÙNG CHUNG CHO CẢ GET VÀ CRUD
+            val userId = authManager.getUserId()?.toIntOrNull() ?: 0
+
+            // 🟢 2. ĐƯA finalUnitTitle RA NGOÀI TƯƠNG TỰ
+            val finalUnitTitle = if (isUnit) {
+                unitTitle
+                    .replace(" ", "")
+                    .replace("Unit0", "Unit")
+            } else {
+                ""
+            }
+
             LaunchedEffect(deckId) {
-
-                val userId = authManager.getUserId()?.toIntOrNull() ?: 0
-
                 println("DEBUG: UnitManager loading with deckId=$deckId, unitTitle=$unitTitle, isUnit=$isUnit")
-
-                val finalUnitTitle = if (isUnit) {
-                    // If it's a regular unit (e.g., "Unit 01"), we can clean it up to just "Unit01" or "Unit1" to match backend expectations
-                    unitTitle
-                        .replace(" ", "")
-                        .replace("Unit0", "Unit")
-                } else {
-                    // If it's not a unit (e.g., virtual deck), we can pass an empty string or the original title based on your backend needs
-                    ""
-                }
-
                 println("DEBUG: Gọi API với deckId=$deckId, DB Unit=$finalUnitTitle")
+
                 viewModel.loadFlashcards(deckId, userId, finalUnitTitle)
             }
 
-            when (val state = uiState) {
+            UnitManagerScreen(
+                unitTitle = unitTitle,
+                uiState = uiState,
+                onNavigateBack = { navController.popBackStack() },
 
-                is UnitUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = androidx.compose.ui.Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                onSaveFlashcard = { id, word, reading, meaning, img, audio ->
+                    if (id == null) {
+                        // NẾU ID = NULL -> TẠO MỚI (CREATE)
+                        viewModel.addFlashcard(
+                            deckId = deckId,
+                            userId = userId,
+                            unitTitle = finalUnitTitle,
+                            word = word,
+                            reading = reading,
+                            meaning = meaning,
+                            imagePath = img,
+                            audioPath = audio
+                        )
+                    } else {
+                        // NẾU CÓ ID -> CẬP NHẬT (UPDATE)
+                        viewModel.updateFlashcard(
+                            cardId = id,
+                            deckId = deckId,
+                            userId = userId,
+                            unitTitle = finalUnitTitle,
+                            word = word,
+                            reading = reading,
+                            meaning = meaning,
+                            imagePath = img,
+                            audioPath = audio
+                        )
                     }
-                }
+                },
 
-                is UnitUiState.Error -> {
-                    Text(text = "Error: ${state.message}")
-                }
-
-                is UnitUiState.Success -> {
-                    UnitManagerScreen(
-                        unitTitle = unitTitle,
-                        flashcards = state.flashcards,
-                        onNavigateBack = { navController.popBackStack() },
-                        onSaveFlashcard = { id, word, reading, meaning, img, audio ->
-                            // Logic gọi API lưu thẻ (nên gọi qua viewModel)
-                        },
-                        onDeleteFlashcard = { id ->
-                            // Logic gọi API xóa thẻ (nên gọi qua viewModel)
-                        }
+                onDeleteFlashcard = { id ->
+                    // (DELETE)
+                    viewModel.deleteFlashcard(
+                        cardId = id,
+                        deckId = deckId,
+                        userId = userId,
+                        unitTitle = finalUnitTitle
                     )
                 }
-            }
+            )
         }
 
         composable(Screen.Quiz.route) {

@@ -26,6 +26,7 @@ import com.example.flashcard_compose_app.ui.viewmodels.HomeViewModel
 fun HomeScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
+    userId: Int,
     userName: String,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory), // Inject HomeViewModel
 ) {
@@ -38,9 +39,12 @@ fun HomeScreen(
     )
 
     val decks by viewModel.decks.collectAsState()
-// val recentDecks by viewModel.recentDecks.collectAsState()
+    // val recentDecks by viewModel.recentDecks.collectAsState()
     val expandedIds by viewModel.expandedDeckIds.collectAsState()
-
+    var parentDeckForNewSub by remember { mutableStateOf<Deck?>(null) }
+    var showAddDeckDialog by remember { mutableStateOf(false) }
+    var deckToEdit by remember { mutableStateOf<Deck?>(null) }
+    var deckToDelete by remember { mutableStateOf<Deck?>(null) }
 
     // Refresh decks when the screen is shown
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,7 +67,10 @@ fun HomeScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             BottomFab(
-                onCreateDeckClick = { },
+                onCreateDeckClick = {
+                    parentDeckForNewSub = null
+                    showAddDeckDialog = true
+                },
                 onCreateFlashcardClick = { }
             )
         },
@@ -137,9 +144,20 @@ fun HomeScreen(
                         viewModel.onDeckClicked(clickedDeck)
                     }
                 },
-                onEditClick = { /* TODO */ },
-                onDeleteClick = { /* TODO */ },
-                onAddUnitClick = { /* TODO */ },
+
+                onEditClick = { clickedDeck ->
+                    deckToEdit = clickedDeck
+                },
+
+                onDeleteClick = { clickedDeck ->
+                    deckToDelete = clickedDeck
+                },
+
+                onAddUnitClick = { clickedDeck ->
+                    parentDeckForNewSub = clickedDeck // Save the parent deck for the new sub-deck/unit
+                    showAddDeckDialog = true          // Open Dialog
+                },
+
                 onManageVocabClick = { clickedUnit ->
                     // Tái sử dụng lại logic check ID ảo của bạn
                     val isLegacyVirtualDeck = clickedUnit.id == 0 || clickedUnit.id > 1000000
@@ -167,6 +185,68 @@ fun HomeScreen(
                     }
                 }
             )
+
+            if (showAddDeckDialog) {
+                AddDeckDialog(
+                    parentDeckName = parentDeckForNewSub?.title, // Change title for Dialog
+                    onDismiss = {
+                        showAddDeckDialog = false
+                        parentDeckForNewSub = null
+                    },
+                    onConfirm = { title, isUnit ->
+                        // Nếu parentDeckForNewSub == null thì ID = 0 (Root Deck)
+                        val parentId = parentDeckForNewSub?.id ?: 0
+
+                        // Nếu là Root Deck thì mặc định isUnit = false
+                        val finalIsUnit = if (parentId == 0) false else isUnit
+
+                        viewModel.createDeck(
+                            title = title,
+                            authorId = userId,
+                            parentId = parentId,
+                            isUnit = finalIsUnit
+                        )
+
+                        showAddDeckDialog = false
+                        parentDeckForNewSub = null
+                    }
+                )
+            }
+
+            if (deckToEdit != null) {
+                EditDeckDialog(
+                    deckToEdit = deckToEdit!!,
+                    onDismiss = {
+                        deckToEdit = null
+                    },
+                    onConfirm = { newTitle, newIsUnit ->
+                        viewModel.updateDeck(
+                            deckId = deckToEdit!!.id,
+                            title = newTitle,
+                            authorId = userId,
+                            parentId = deckToEdit!!.parentId ?: 0,
+                            isUnit = newIsUnit
+                        )
+                        deckToEdit = null
+                    }
+                )
+            }
+
+            if (deckToDelete != null) {
+                DeleteConfirmationDialog(
+                    title = "Delete Deck / Unit",
+                    message = "Are you sure to Delete '${deckToDelete?.title}'?\n\nWarning: All Flashcards and Children inside will be Deleted!",
+                    onConfirm = {
+                        deckToDelete?.let { deck ->
+                            viewModel.deleteDeck(deck.id)
+                        }
+                        deckToDelete = null // Close Dialog
+                    },
+                    onDismiss = {
+                        deckToDelete = null // Cancel Deletion and Close Dialog
+                    }
+                )
+            }
         }
     }
 }
@@ -176,6 +256,7 @@ fun HomeScreen(
 fun HomeScreenPreview() {
     HomeScreen(
         navController = rememberNavController(),
+        userId = 1,
         userName = "Alice"
     )
 }

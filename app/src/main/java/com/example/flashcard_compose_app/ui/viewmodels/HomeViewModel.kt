@@ -3,6 +3,7 @@ package com.example.flashcard_compose_app.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flashcard_compose_app.data.AuthManager
+import com.example.flashcard_compose_app.data.network.dto.request.DeckRequest
 import com.example.flashcard_compose_app.data.repository.DeckRepository
 import com.example.flashcard_compose_app.domain.model.Deck
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,6 +126,76 @@ class HomeViewModel(private val repository: DeckRepository, private val authMana
             } else {
                 // Not parent and no children -> keep as is
                 deck
+            }
+        }
+    }
+
+    // CRUD functions for Decks and Units (Create, Read, Update, Delete) - to be implemented
+    // CREATE DECK / UNIT
+    fun createDeck(title: String, authorId: Int, parentId: Int, isUnit: Boolean) {
+        viewModelScope.launch {
+            try {
+                val request = DeckRequest(
+                    title = title,
+                    description = "",
+                    authorId = authorId,
+                    parentDeckId = parentId, // Receive ID (0 if it's Root, > 0 if it's sub-deck/unit)
+                    isUnit = isUnit,
+                    isPublic = false
+                )
+
+                val result = repository.createDeck(request)
+
+                if (result.isSuccess) {
+                    loadRootDecks()
+                } else {
+                    println("error to Create Deck: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // UPDATE DECK / UNIT
+    fun updateDeck(deckId: Int, title: String, authorId: Int, parentId: Int, isUnit: Boolean) {
+        viewModelScope.launch {
+            try {
+                val request = DeckRequest(
+                    title = title,
+                    description = "",
+                    authorId = authorId,
+                    parentDeckId = parentId,
+                    isUnit = isUnit,
+                    isPublic = false
+                )
+
+                val result = repository.updateDeck(deckId, request)
+
+                if (result.isSuccess) {
+                    loadRootDecks()
+                } else {
+                    println("error to Update Deck: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // DELETE DECK / UNIT
+    fun deleteDeck(deckId: Int) {
+        viewModelScope.launch {
+            try {
+                val result = repository.deleteDeck(deckId)
+                if (result.isSuccess) {
+                    // Reload Deck Tree when delete successfully (to reflect changes in UI)
+                    loadRootDecks()
+                } else {
+                    println("error to Delete Deck: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

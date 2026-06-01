@@ -1,6 +1,7 @@
 package com.example.flashcard_compose_app.data.repository
 
 import com.example.flashcard_compose_app.data.network.api.DeckApiService
+import com.example.flashcard_compose_app.data.network.dto.request.DeckRequest
 import com.example.flashcard_compose_app.domain.model.Deck
 
 class DeckRepository(private val apiService: DeckApiService) {
@@ -95,6 +96,48 @@ class DeckRepository(private val apiService: DeckApiService) {
                 Result.success(units)
             } else {
                 Result.failure(Exception("error: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // Create a new root deck (CREATE)
+    suspend fun createDeck(request: DeckRequest): Result<Boolean> {
+        return try {
+            val response = apiService.createDeck(request)
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("error Create Deck: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // UPDATE
+    suspend fun updateDeck(id: Int, request: DeckRequest): Result<Boolean> {
+        return try {
+            val response = apiService.updateDeck(id, request)
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("error Update Deck: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // DELETE
+    suspend fun deleteDeck(id: Int): Result<Boolean> {
+        return try {
+            val response = apiService.deleteDeck(id)
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.failure(Exception("error Delete Deck: ${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)

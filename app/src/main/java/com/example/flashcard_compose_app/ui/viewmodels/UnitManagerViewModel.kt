@@ -2,6 +2,7 @@ package com.example.flashcard_compose_app.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.flashcard_compose_app.data.network.dto.request.FlashcardRequest
 import com.example.flashcard_compose_app.data.repository.FlashcardRepository
 import com.example.flashcard_compose_app.domain.model.Flashcard
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,54 @@ class UnitManagerViewModel(private val repository: FlashcardRepository) : ViewMo
 
     private val _uiState = MutableStateFlow<UnitUiState>(UnitUiState.Loading)
     val uiState: StateFlow<UnitUiState> = _uiState
+
+    fun addFlashcard(
+        deckId: Int,
+        userId: Int,
+        unitTitle: String?,
+        word: String,
+        reading: String,
+        meaning: String,
+        imagePath: String? = null,
+        audioPath: String? = null
+    ) {
+        viewModelScope.launch {
+            val request = FlashcardRequest(deckId, unitTitle, word, reading, meaning, imagePath, audioPath)
+            val result = repository.createFlashcard(request)
+            if (result.isSuccess) {
+                loadFlashcards(deckId, userId, unitTitle) // Refresh UI
+            }
+        }
+    }
+
+    fun updateFlashcard(
+        cardId: Int,
+        deckId: Int,
+        userId: Int,
+        unitTitle: String?,
+        word: String,
+        reading: String,
+        meaning: String,
+        imagePath: String? = null,
+        audioPath: String? = null
+    ) {
+        viewModelScope.launch {
+            val request = FlashcardRequest(deckId, unitTitle, word, reading, meaning, imagePath, audioPath)
+            val result = repository.updateFlashcard(cardId, request)
+            if (result.isSuccess) {
+                loadFlashcards(deckId, userId, unitTitle) // Refresh UI
+            }
+        }
+    }
+
+    fun deleteFlashcard(cardId: Int, deckId: Int, userId: Int, unitTitle: String?) {
+        viewModelScope.launch {
+            val result = repository.deleteFlashcard(cardId)
+            if (result.isSuccess) {
+                loadFlashcards(deckId, userId, unitTitle) // Refresh UI
+            }
+        }
+    }
 
     fun loadFlashcards(deckId: Int, userId: Int, unitTitle: String?) {
 

@@ -1,4 +1,4 @@
-package com.example.flashcard_compose_app.data.network.dto
+package com.example.flashcard_compose_app.data.network.dto.request
 
 data class StudyProgressRequest(
     val userId: Int,
