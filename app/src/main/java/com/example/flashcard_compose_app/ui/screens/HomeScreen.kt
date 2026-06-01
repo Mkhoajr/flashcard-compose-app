@@ -1,10 +1,17 @@
 package com.example.flashcard_compose_app.ui.screens
 
 import android.net.Uri
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,6 +53,15 @@ fun HomeScreen(
     var deckToEdit by remember { mutableStateOf<Deck?>(null) }
     var deckToDelete by remember { mutableStateOf<Deck?>(null) }
 
+    var searchQuery by remember { mutableStateOf("") }
+
+    // DECK LIST filtered
+    val displayedDecks = remember(decks, searchQuery) {
+        filterDecks(decks, searchQuery)
+    }
+
+    val focusManager = LocalFocusManager.current
+
     // Refresh decks when the screen is shown
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -81,6 +97,11 @@ fun HomeScreen(
         modifier = Modifier
             .padding(homePadding)
             .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus() // Clear focus when tapping outside of TextField
+                })
+            }
     ) {
             // Welcome Section
             AnimatedGreetingSection(userName = userName)
@@ -89,6 +110,35 @@ fun HomeScreen(
             RecentLearningDeck(recentDecks = recentDecks, onDeckClick = { /* TODO */ })
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // SEARCH BAR
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search Deck, Lesson...") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "Search")
+                },
+                trailingIcon = {
+                    // Just display clear button when there's text to clear
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary
+                )
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // All Decks Section
             Text(
@@ -100,7 +150,8 @@ fun HomeScreen(
 
             // Body
             DeckList(
-                decks = decks,
+                decks = displayedDecks,
+                //decks = decks,
                 expandedIds = expandedIds,
                 onDeckClick = { clickedDeck ->
                     if (clickedDeck.isUnit) {
@@ -246,6 +297,31 @@ fun HomeScreen(
                         deckToDelete = null // Cancel Deletion and Close Dialog
                     }
                 )
+            }
+        }
+    }
+}
+
+// Function to recursively filter decks based on search query
+fun filterDecks(decks: List<Deck>, query: String): List<Deck> {
+    if (query.isBlank()) return decks
+
+    return decks.mapNotNull { deck ->
+        // Kiểm tra xem tên thư mục hiện tại có khớp không
+        val matches = deck.title.contains(query, ignoreCase = true)
+
+        if (matches) {
+            // Nếu cha đã khớp -> Giữ lại nguyên vẹn cha và toàn bộ con cháu
+            deck
+        } else {
+            // Nếu cha không khớp -> Đi tìm xem có đứa con nào khớp không
+            val filteredSubDecks = filterDecks(deck.subDecks, query)
+            if (filteredSubDecks.isNotEmpty()) {
+                // Nếu có con khớp -> Giữ lại cha, nhưng chỉ hiển thị những đứa con khớp
+                deck.copy(subDecks = filteredSubDecks)
+            } else {
+                // Cả cha và con đều không khớp -> Loại bỏ hoàn toàn
+                null
             }
         }
     }

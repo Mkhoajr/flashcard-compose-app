@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun TopAppBar(
     drawerState: DrawerState,
-    onSearchClick: () -> Unit,
     onSyncClick: () -> Unit,
     onImportClick: () -> Unit,
     onExportClick: () -> Unit
@@ -47,13 +46,6 @@ fun TopAppBar(
             }
         },
         actions = {
-            IconButton(onClick = onSearchClick) {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = "Search",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
             IconButton(onClick = onSyncClick) {
                 Icon(
                     Icons.Default.Refresh,
@@ -109,7 +101,6 @@ fun KebabMenu(onImportClick: () -> Unit, onExportClick: () -> Unit) {
 fun TopAppBarPreview() {
     TopAppBar(
         drawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
-        onSearchClick = {},
         onSyncClick = {},
         onImportClick = {},
         onExportClick = {}

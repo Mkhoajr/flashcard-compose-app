@@ -39,7 +39,6 @@ fun MainAppLayout(
             topBar = {
                 TopAppBar(
                     drawerState = drawerState,
-                    onSearchClick = { },
                     onSyncClick = { },
                     onImportClick = { },
                     onExportClick = { }
