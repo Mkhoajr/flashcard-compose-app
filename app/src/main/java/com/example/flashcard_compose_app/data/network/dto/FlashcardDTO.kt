@@ -1,5 +1,7 @@
 package com.example.flashcard_compose_app.data.network.dto
 
+import com.google.gson.annotations.SerializedName
+
 data class FlashcardDTO(
     val id: Int,
     val word: String,
@@ -10,5 +12,6 @@ data class FlashcardDTO(
     val unit: String?,
     val orderIndex: Int,
     val status: String?,
-    val isFavourite: Boolean? = false
+    @SerializedName("isFavourite")
+    val isFavourite: Boolean?
 )

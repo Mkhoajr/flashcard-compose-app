@@ -15,6 +15,7 @@ import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.flashcard_compose_app.data.AuthManager
 import com.example.flashcard_compose_app.ui.components.MainAppLayout
+import com.example.flashcard_compose_app.ui.screens.FavoriteCardsScreen
 import com.example.flashcard_compose_app.ui.screens.FlashcardScreen
 import com.example.flashcard_compose_app.ui.screens.HomeScreen
 import com.example.flashcard_compose_app.ui.screens.LoginScreen
@@ -177,10 +178,32 @@ fun NavGraph() {
             )
         }
 
-        composable(Screen.Favorites.route) {
-            MainAppLayout(navController = navController, authManager = authManager) { _ ->
-                // FavoritesScreen
+        composable(route = Screen.Favorites.route) {
+            val viewModel: UnitManagerViewModel = viewModel(factory = AppViewModelProvider.UnitManagerFactory)
+            val uiState by viewModel.uiState.collectAsState()
+
+            val context = LocalContext.current
+            val authManager = AuthManager(context)
+            val userId = authManager.getUserId()?.toIntOrNull() ?: 0
+
+            LaunchedEffect(Unit) {
+                viewModel.loadFavoriteFlashcards(userId)
             }
+
+            FavoriteCardsScreen(
+                uiState = uiState,
+                onNavigateBack = { navController.popBackStack() },
+                onRemoveFavorite = { card ->
+                    viewModel.toggleFavoriteStatus(cardId = card.id, userId = userId)
+
+                    viewModel.loadFavoriteFlashcards(userId)
+                },
+                onStudyClick = {
+                    // Điều hướng sang FlashcardScreen để học danh sách này.
+                    // Có thể truyền một deckId ảo (ví dụ -1) để báo hiệu đây là list Favorites
+                    // navController.navigate("flashcard_screen/-1?deckName=Favorites&unitTitle=Review")
+                }
+            )
         }
 
         composable(Screen.Statistics.route) {

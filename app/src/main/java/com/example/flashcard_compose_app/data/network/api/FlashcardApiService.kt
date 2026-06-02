@@ -3,6 +3,7 @@ package com.example.flashcard_compose_app.data.network.api
 import com.example.flashcard_compose_app.data.network.dto.FlashcardDTO
 import com.example.flashcard_compose_app.data.network.dto.request.FlashcardRequest
 import com.example.flashcard_compose_app.data.network.dto.request.StudyProgressRequest
+import com.example.flashcard_compose_app.domain.model.Flashcard
 import retrofit2.Response
 import retrofit2.http.*
 interface FlashcardApiService {
@@ -28,4 +29,9 @@ interface FlashcardApiService {
     @DELETE("flashcards/{id}")
     suspend fun deleteFlashcard(@Path("id") id: Int): Response<Void>
 
+    @PUT("flashcards/{id}/favorite")
+    suspend fun toggleFavorite(@Path("id") id: Int): Response<Void>
+
+    @GET("flashcards/favorites")
+    suspend fun getFavoriteFlashcards(@Query("userId") userId: Int): Response<List<Flashcard>>
 }

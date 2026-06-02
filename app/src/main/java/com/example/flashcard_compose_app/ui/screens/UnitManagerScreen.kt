@@ -81,7 +81,7 @@ fun UnitManagerScreen(
                 is UnitUiState.Success -> {
                     if (uiState.flashcards.isEmpty()) {
                         Text(
-                            "No flashcards yet. Tap + to add!",
+                            "No flashcards yet.",
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {

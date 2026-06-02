@@ -55,10 +55,10 @@ fun FlashcardScreen(
     val stillLearningCount by viewModel.stillLearningCount.collectAsState()
     val currentCardIndex by viewModel.currentCardIndex.collectAsState()
     val isFlipped by viewModel.isFlipped.collectAsState()
-    val favorites by viewModel.favorites.collectAsState()
+    val favourites by viewModel.favorites.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    LaunchedEffect(deckId, unitId) {
+    LaunchedEffect(Unit) {
         viewModel.loadFlashcards(deckId, unitId)
         viewModel.setDeckName(deckName)
         viewModel.setUnitTitle(unitTitle)
@@ -91,10 +91,10 @@ fun FlashcardScreen(
         unitTitle = unitTitle,
         currentIndex = if (flashcards.isEmpty()) 0 else currentCardIndex + 1,
         isFlipped = isFlipped,
-        isFavorite = currentCard?.let { favorites.contains(it.id) } ?: false,
+        isFavourite = currentCard?.let { favourites.contains(it.id) } ?: false,
         onClose = { navController.popBackStack() },
         onFlip = { viewModel.toggleFlip() },
-        onFavoriteToggle = { currentCard?.let { viewModel.toggleFavorite(it.id) } },
+        onFavouriteToggle = { currentCard?.let { viewModel.toggleFavorite(it.id) } },
         onNotLearned = {
             viewModel.markCardAsNotLearned()
         },
@@ -118,10 +118,10 @@ fun FlashcardScreenContent(
     unitTitle: String,
     currentIndex: Int,
     isFlipped: Boolean,
-    isFavorite: Boolean,
     onClose: () -> Unit,
     onFlip: () -> Unit,
-    onFavoriteToggle: () -> Unit,
+    isFavourite: Boolean,
+    onFavouriteToggle: () -> Unit,
     onNotLearned: () -> Unit,
     onLearned: () -> Unit,
     onUndo: () -> Unit,
@@ -167,8 +167,8 @@ fun FlashcardScreenContent(
                     card = currentCard,
                     isFlipped = isFlipped,
                     onFlip = onFlip,
-                    isFavorite = isFavorite,
-                    onFavoriteToggle = onFavoriteToggle
+                    isFavourite = isFavourite,
+                    onFavouriteToggle = onFavouriteToggle
                 )
             }
 
@@ -333,8 +333,8 @@ fun FlashcardContent(
     card: Flashcard,
     isFlipped: Boolean,
     onFlip: () -> Unit,
-    isFavorite: Boolean,
-    onFavoriteToggle: () -> Unit
+    isFavourite: Boolean,
+    onFavouriteToggle: () -> Unit
 ) {
     // Optimize Animation: Reduce the time when flipped (400ms) and using Easing to flip more naturally
     val rotationY by animateFloatAsState(
@@ -379,13 +379,13 @@ fun FlashcardContent(
                 verticalAlignment = Alignment.Top
             ) {
                 IconButton(
-                    onClick = onFavoriteToggle,
+                    onClick = onFavouriteToggle,
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
-                        imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                        imageVector = if (isFavourite) Icons.Filled.Star else Icons.Outlined.Star,
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) Amber else Color.Gray,
+                        tint = if (isFavourite) Amber else Color.Gray,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -503,10 +503,10 @@ fun FlashcardScreenPreviewContent() {
         unitTitle = "Unit 1",
         currentIndex = 3,
         isFlipped = false,
-        isFavorite = false,
+        isFavourite = false,
         onClose = {},
         onFlip = {},
-        onFavoriteToggle = {},
+        onFavouriteToggle = {},
         onNotLearned = {},
         onLearned = {},
         onUndo = {},

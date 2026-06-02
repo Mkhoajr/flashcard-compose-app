@@ -31,6 +31,7 @@ class UnitManagerViewModel(private val repository: FlashcardRepository) : ViewMo
         audioPath: String? = null
     ) {
         viewModelScope.launch {
+
             val request = FlashcardRequest(deckId, unitTitle, word, reading, meaning, imagePath, audioPath)
             val result = repository.createFlashcard(request)
             if (result.isSuccess) {
@@ -51,6 +52,7 @@ class UnitManagerViewModel(private val repository: FlashcardRepository) : ViewMo
         audioPath: String? = null
     ) {
         viewModelScope.launch {
+
             val request = FlashcardRequest(deckId, unitTitle, word, reading, meaning, imagePath, audioPath)
             val result = repository.updateFlashcard(cardId, request)
             if (result.isSuccess) {
@@ -61,6 +63,7 @@ class UnitManagerViewModel(private val repository: FlashcardRepository) : ViewMo
 
     fun deleteFlashcard(cardId: Int, deckId: Int, userId: Int, unitTitle: String?) {
         viewModelScope.launch {
+
             val result = repository.deleteFlashcard(cardId)
             if (result.isSuccess) {
                 loadFlashcards(deckId, userId, unitTitle) // Refresh UI
@@ -82,6 +85,34 @@ class UnitManagerViewModel(private val repository: FlashcardRepository) : ViewMo
             }.onFailure { exception ->
                 println("DEBUG: API Failure - ${exception.message}")
                 _uiState.value = UnitUiState.Error(exception.message ?: "err to connect to Server")
+            }
+        }
+    }
+
+    fun loadFavoriteFlashcards(userId: Int) {
+        viewModelScope.launch {
+
+            _uiState.value = UnitUiState.Loading
+
+            val result = repository.getFavoriteFlashcards(userId)
+
+            result.onSuccess { flashcards ->
+                _uiState.value = UnitUiState.Success(flashcards)
+            }.onFailure { exception ->
+                _uiState.value = UnitUiState.Error(exception.message ?: "Could not load favorite flashcards!")
+            }
+        }
+    }
+
+    fun toggleFavoriteStatus(cardId: Int, userId: Int) {
+        viewModelScope.launch {
+
+            val result = repository.toggleFavorite(cardId)
+
+            if (result.isSuccess) {
+                loadFavoriteFlashcards(userId)
+            } else {
+                println("DEBUG: Failed to toggle favorite status")
             }
         }
     }

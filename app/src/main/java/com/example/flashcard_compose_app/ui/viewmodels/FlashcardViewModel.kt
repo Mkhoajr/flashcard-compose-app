@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.flashcard_compose_app.data.AuthManager
+import com.example.flashcard_compose_app.data.network.dto.FlashcardDTO
 import com.example.flashcard_compose_app.data.repository.FlashcardRepository
 import com.example.flashcard_compose_app.domain.model.Flashcard
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,41 +66,32 @@ class FlashcardViewModel(
     private val learnedCardsInSession = mutableSetOf<String>()
 
     fun loadFlashcards(deckId: Int, unitId: String? = null) {
-        println("DEBUG - Flashcard ViewModel: deckId = $deckId, unitId = $unitId")
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                // Receive List<Flashcard> from Repository
                 val result = repository.getFlashcards(deckId, currentUserId, unitId)
-                result.onSuccess { flashcardDTOs ->
-                    val flashcardList = flashcardDTOs.map { dto ->
-                        Flashcard(
-                            id = dto.id,
-                            unit = dto.unit,
-                            word = dto.word,
-                            reading = dto.reading,
-                            meaning = dto.meaning,
-                            imagePath = dto.imagePath,
-                            audioPath = dto.audioPath,
-                            status = dto.status ?: "not-learned"
-                        )
-                    }
+
+                result.onSuccess { flashcardList ->
 
                     _flashcards.value = flashcardList
 
-                    if (flashcardDTOs.isNotEmpty()) {
-                        _unitName.value = unitId ?: flashcardDTOs.first().unit
+                    _favorites.value = flashcardList
+                        .filter { it.isFavourite == true }
+                        .map { it.id }
+                        .toSet()
+
+                    if (flashcardList.isNotEmpty()) {
+                        _unitName.value = unitId ?: flashcardList.first().unit
                     }
 
-                    // Find index of the first card that is not learned (status = "NOT_LEARNED")
                     val resumeIndex = flashcardList.indexOfFirst {
                         it.status.equals("not-learned", ignoreCase = true) || it.status.equals("NOT_LEARNED", ignoreCase = true)
                     }
 
-                    // Jump to "NOT_LEARNED" card
                     if (resumeIndex != -1) {
                         _currentCardIndex.value = resumeIndex
                     } else {
-                        // If all cards are learned (= -1), set index to the end to show "Deck Completed!"
                         _currentCardIndex.value = flashcardList.size
                     }
 
@@ -124,9 +116,21 @@ class FlashcardViewModel(
     fun toggleFlip() { _isFlipped.value = !_isFlipped.value }
 
     fun toggleFavorite(cardId: Int) {
-        val current = _favorites.value.toMutableSet()
-        if (current.contains(cardId)) current.remove(cardId) else current.add(cardId)
-        _favorites.value = current
+        // Update UI immediately for better UX
+        val currentFavorites = _favorites.value.toMutableSet()
+        if (currentFavorites.contains(cardId)) {
+            currentFavorites.remove(cardId)
+        } else {
+            currentFavorites.add(cardId)
+        }
+        _favorites.value = currentFavorites
+
+        viewModelScope.launch {
+            val result = repository.toggleFavorite(cardId)
+            if (result.isFailure) {
+                println("DEBUG: error to toggle Favourite - ${result.exceptionOrNull()?.message}")
+            }
+        }
     }
 
     // Function to Update Local Card Status After User Action (Knew / Still Learning)
