@@ -1,8 +1,6 @@
 package com.example.flashcard_compose_app.ui.navigation
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,7 +21,6 @@ import com.example.flashcard_compose_app.ui.screens.RegisterScreen
 import com.example.flashcard_compose_app.ui.screens.UnitManagerScreen
 import com.example.flashcard_compose_app.ui.viewmodels.AppViewModelProvider
 import com.example.flashcard_compose_app.ui.viewmodels.UnitManagerViewModel
-import com.example.flashcard_compose_app.ui.viewmodels.UnitUiState
 
 @Composable
 fun NavGraph() {
@@ -83,10 +80,8 @@ fun NavGraph() {
             val context = LocalContext.current
             val authManager = AuthManager(context)
 
-            // 🟢 1. ĐƯA userId RA NGOÀI ĐỂ DÙNG CHUNG CHO CẢ GET VÀ CRUD
             val userId = authManager.getUserId()?.toIntOrNull() ?: 0
 
-            // 🟢 2. ĐƯA finalUnitTitle RA NGOÀI TƯƠNG TỰ
             val finalUnitTitle = if (isUnit) {
                 unitTitle
                     .replace(" ", "")
@@ -121,7 +116,7 @@ fun NavGraph() {
                             audioPath = audio
                         )
                     } else {
-                        // NẾU CÓ ID -> CẬP NHẬT (UPDATE)
+                        // UPDATE
                         viewModel.updateFlashcard(
                             cardId = id,
                             deckId = deckId,
@@ -137,7 +132,7 @@ fun NavGraph() {
                 },
 
                 onDeleteFlashcard = { id ->
-                    // (DELETE)
+                    // DELETE
                     viewModel.deleteFlashcard(
                         cardId = id,
                         deckId = deckId,
