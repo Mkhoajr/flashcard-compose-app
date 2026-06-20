@@ -87,7 +87,6 @@ fun HomeScreen(
                     parentDeckForNewSub = null
                     showAddDeckDialog = true
                 },
-                onCreateFlashcardClick = { }
             )
         },
         floatingActionButtonPosition = FabPosition.End,
@@ -233,6 +232,28 @@ fun HomeScreen(
                                 isUnit = false
                             )
                         )
+                    }
+                },
+
+                onQuizClick = { selectedUnit ->
+                    // 1. Tái sử dụng logic kiểm tra Deck Ảo (Dữ liệu NEJ cũ)
+                    val isLegacyVirtualDeck = selectedUnit.id == 0 || selectedUnit.id > 1000000
+
+                    if (isLegacyVirtualDeck) {
+                        // ---> LUỒNG 1: DỮ LIỆU CŨ (NEJ) <---
+                        // PHẢI truyền ID của Deck Cha (parentId) thì Server mới tìm được
+                        val safeParentId = selectedUnit.parentId ?: 0
+                        navController.navigate(
+                            Screen.Quiz.createRoute(deckId = safeParentId, unitTitle = selectedUnit.title)
+                        )
+                        println("DEBUG: QUIZ - Luồng CŨ: Gửi parentId = $safeParentId, unitTitle = ${selectedUnit.title}")
+                    } else {
+                        // ---> SECOND THREAD: NEW DATA (Kiến trúc chuẩn) <---
+                        // Truyền thẳng ID của chính cái Unit đó
+                        navController.navigate(
+                            Screen.Quiz.createRoute(deckId = selectedUnit.id, unitTitle = selectedUnit.title)
+                        )
+                        println("DEBUG: QUIZ - Luồng MỚI: Gửi Unit ID = ${selectedUnit.id}, unitTitle = ${selectedUnit.title}")
                     }
                 }
             )

@@ -5,7 +5,17 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object Home : Screen("home")
     object Flashcard : Screen("flashcard_screen/{deckId}?unitId={unitId}&deckName={deckName}&unitTitle={unitTitle}")
-    object Quiz : Screen("quiz")
+    object Quiz : Screen("quiz/{deckId}?unitTitle={unitTitle}") {
+        fun createRoute(deckId: Int, unitTitle: String): String {
+            return "quiz/$deckId?unitTitle=${android.net.Uri.encode(unitTitle)}"
+        }
+    }
+    object QuizHistory : Screen("quiz_history")
+    object QuizDetail : Screen("quiz_detail/{quizId}") {
+        fun createRoute(quizId: Int): String {
+            return "quiz_detail/$quizId"
+        }
+    }
     object Favorites : Screen("favorites")
     object Statistics : Screen("statistics")
     object Settings : Screen("settings")

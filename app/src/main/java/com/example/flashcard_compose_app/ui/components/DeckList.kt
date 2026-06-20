@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,6 +40,7 @@ fun DeckList(
     onDeleteClick: (Deck) -> Unit,
     onAddUnitClick: (Deck) -> Unit,
     onManageVocabClick: (Deck) -> Unit,
+    onQuizClick: (Deck) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -50,10 +52,11 @@ fun DeckList(
             decks = decks,
             expandedIds = expandedIds,
             onDeckClick = onDeckClick,
-            onEditClick = onEditClick,         // Nối cáp
-            onDeleteClick = onDeleteClick,     // Nối cáp
-            onAddUnitClick = onAddUnitClick,   // Nối cáp
+            onEditClick = onEditClick,
+            onDeleteClick = onDeleteClick,
+            onAddUnitClick = onAddUnitClick,
             onManageVocabClick = onManageVocabClick,
+            onQuizClick = onQuizClick,
             depth = 0,
             parentKey = "root"
         )
@@ -64,10 +67,11 @@ fun LazyListScope.deckTree(
     decks: List<Deck>,
     expandedIds: Set<Int>,
     onDeckClick: (Deck) -> Unit,
-    onEditClick: (Deck) -> Unit,       // Nối cáp
-    onDeleteClick: (Deck) -> Unit,     // Nối cáp
-    onAddUnitClick: (Deck) -> Unit,    // Nối cáp
+    onEditClick: (Deck) -> Unit,
+    onDeleteClick: (Deck) -> Unit,
+    onAddUnitClick: (Deck) -> Unit,
     onManageVocabClick: (Deck) -> Unit,
+    onQuizClick: (Deck) -> Unit,
     depth: Int,
     parentKey: String = ""
 ) {
@@ -83,7 +87,8 @@ fun LazyListScope.deckTree(
                 onEditClick = onEditClick, // Pass to DeckItem
                 onDeleteClick = onDeleteClick,
                 onAddUnitClick = onAddUnitClick,
-                onManageVocabClick = onManageVocabClick
+                onManageVocabClick = onManageVocabClick,
+                onQuizClick = onQuizClick
             )
         }
 
@@ -96,6 +101,7 @@ fun LazyListScope.deckTree(
                 onDeleteClick = onDeleteClick,
                 onAddUnitClick = onAddUnitClick,
                 onManageVocabClick = onManageVocabClick,
+                onQuizClick = onQuizClick,
                 depth = depth + 1,
                 parentKey = itemKey
             )
@@ -110,11 +116,11 @@ fun DeckItem(
     isExpanded: Boolean = false,
     depth: Int = 0,
     onDeckClick: (Deck) -> Unit,
-    // 🟢 THÊM 3 CALLBACK MỚI ĐỂ ĐẨY SỰ KIỆN LÊN MÀN HÌNH CHÍNH
     onEditClick: (Deck) -> Unit,
     onDeleteClick: (Deck) -> Unit,
     onAddUnitClick: (Deck) -> Unit,
-    onManageVocabClick: (Deck) -> Unit
+    onManageVocabClick: (Deck) -> Unit,
+    onQuizClick: (Deck) -> Unit
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 90f else 0f,
@@ -161,7 +167,7 @@ fun DeckItem(
 
                     Icon(
                         imageVector = if (deck.isUnit) Icons.Default.Menu else Icons.Default.Folder,
-                        contentDescription = "Loại thẻ",
+                        contentDescription = "Deck Type",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -233,6 +239,7 @@ fun DeckItem(
 
                                 // Just show Manage Vocabulary option if this is a Unit (not a Deck)
                                 if (deck.isUnit) {
+                                    // Show "Manage Flashcards" option for Units
                                     DropdownMenuItem(
                                         text = { Text("Manage Flashcards") },
                                         onClick = {
@@ -240,6 +247,15 @@ fun DeckItem(
                                             onManageVocabClick(deck)
                                         },
                                         leadingIcon = { Icon(Icons.Default.List, "Manage") }
+                                    )
+                                    // Show "Quiz Mode" option for Units
+                                    DropdownMenuItem(
+                                        text = { Text("Quiz Mode") },
+                                        onClick = {
+                                            expandedMenu = false
+                                            onQuizClick(deck)
+                                        },
+                                        leadingIcon = { Icon(Icons.Default.Quiz, "Quiz") }
                                     )
                                 }
 
@@ -296,6 +312,7 @@ fun DeckListPreview() {
         onEditClick = {},
         onDeleteClick = {},
         onAddUnitClick = {},
-        onManageVocabClick = {}
+        onManageVocabClick = {},
+        onQuizClick = {}
     )
 }

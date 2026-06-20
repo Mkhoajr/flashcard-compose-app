@@ -11,6 +11,12 @@ val QuizletGrey = Color(0xFF424858)
 val QuizletPrimaryBtn = Color(0xFF7A86FF)
 val QuizletSecondaryBtn = Color(0xFF2E3245)
 
+// COLOR FOR QUIZ SCREEN
+val QuizletCard = Color(0xFF2E3856)
+val QuizletOutline = Color(0xFF586380)
+val QuizletTextPrimary = Color.White
+val QuizletTextSecondary = Color(0xFFB6C0D9)
+
 // Primary Indigo Color (#3F51B5)
 val Indigo = Color(0xFF3F51B5)
 val IndigoDark = Color(0xFF303F9F)

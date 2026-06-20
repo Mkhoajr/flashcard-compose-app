@@ -107,24 +107,24 @@ fun DeckCompletedScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Practice with questions Button
-        Button(
-            onClick = onPracticeClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = QuizletPrimaryBtn),
-            shape = RoundedCornerShape(50)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = "Practice",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("Practice with questions", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        }
-        Spacer(modifier = Modifier.height(16.dp))
+//        Button(
+//            onClick = onPracticeClick,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(56.dp),
+//            colors = ButtonDefaults.buttonColors(containerColor = QuizletPrimaryBtn),
+//            shape = RoundedCornerShape(50)
+//        ) {
+//            Icon(
+//                imageVector = Icons.Default.Refresh,
+//                contentDescription = "Practice",
+//                tint = Color.White,
+//                modifier = Modifier.size(24.dp)
+//            )
+//            Spacer(modifier = Modifier.width(12.dp))
+//            Text("Practice with questions", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+//        }
+//        Spacer(modifier = Modifier.height(16.dp))
 
         // Focus on Still Learning Button
         if (stillLearningCount > 0) {

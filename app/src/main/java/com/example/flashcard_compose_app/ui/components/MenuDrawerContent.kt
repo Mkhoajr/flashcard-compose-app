@@ -75,12 +75,18 @@ fun MenuDrawerContent(
             )
 
             NavigationDrawerItem(
-                label = { Text("Quiz Mode") },
-                icon = { Icon(Icons.Default.Quiz, contentDescription = "Quiz Mode") }, // Bọc Icon vào đây
+                label = { Text("Quiz History") },
+                icon = { Icon(Icons.Default.History, contentDescription = "Quiz History") },
                 selected = false,
                 onClick = {
-                    navController.navigate(Screen.Quiz.route)
-                    onClose()
+                    navController.navigate(Screen.QuizHistory.route) {
+
+                        popUpTo(Screen.Home.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+
+                        onClose()
+                    }
                 },
                 modifier = Modifier.padding(horizontal = 12.dp)
             )

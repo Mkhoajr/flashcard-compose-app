@@ -3,6 +3,7 @@ package com.example.flashcard_compose_app.data.network
 import com.example.flashcard_compose_app.data.network.api.AuthApiService
 import com.example.flashcard_compose_app.data.network.api.DeckApiService
 import com.example.flashcard_compose_app.data.network.api.FlashcardApiService
+import com.example.flashcard_compose_app.data.network.api.QuizApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -28,4 +29,5 @@ object RetrofitClient {
     val authApiService: AuthApiService = retrofit.create(AuthApiService::class.java)
     val deckApiService: DeckApiService = retrofit.create(DeckApiService::class.java)
     val flashcardApiService: FlashcardApiService = retrofit.create(FlashcardApiService::class.java)
+    val quizApiService: QuizApiService = retrofit.create(QuizApiService::class.java)
 }

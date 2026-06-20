@@ -17,6 +17,9 @@ import com.example.flashcard_compose_app.ui.screens.FavoriteCardsScreen
 import com.example.flashcard_compose_app.ui.screens.FlashcardScreen
 import com.example.flashcard_compose_app.ui.screens.HomeScreen
 import com.example.flashcard_compose_app.ui.screens.LoginScreen
+import com.example.flashcard_compose_app.ui.screens.QuizDetailScreen
+import com.example.flashcard_compose_app.ui.screens.QuizHistoryScreen
+import com.example.flashcard_compose_app.ui.screens.QuizScreen
 import com.example.flashcard_compose_app.ui.screens.RegisterScreen
 import com.example.flashcard_compose_app.ui.screens.UnitManagerScreen
 import com.example.flashcard_compose_app.ui.viewmodels.AppViewModelProvider
@@ -143,10 +146,6 @@ fun NavGraph() {
             )
         }
 
-        composable(Screen.Quiz.route) {
-            // QuizScreen
-        }
-
         composable(
             route = Screen.Flashcard.route,
             arguments = listOf(
@@ -201,10 +200,45 @@ fun NavGraph() {
             )
         }
 
-        composable(Screen.Statistics.route) {
-            MainAppLayout(navController = navController, authManager = authManager) { _ ->
-                // StatisticsScreen
+        composable(
+            route = Screen.Quiz.route,
+            arguments = listOf(
+                navArgument("deckId") { type = NavType.IntType },
+                navArgument("unitTitle") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            // Get data from URL
+            val deckId = backStackEntry.arguments?.getInt("deckId") ?: 0
+            val unitTitle = backStackEntry.arguments?.getString("unitTitle") ?: ""
+
+            QuizScreen(
+                navController = navController,
+                deckId = deckId,
+                unitTitle = unitTitle
+            )
+        }
+
+        composable(Screen.QuizHistory.route) {
+            MainAppLayout(navController = navController, authManager = authManager) { innerPadding ->
+                QuizHistoryScreen(
+                    navController = navController,
+                    modifier = Modifier.padding(innerPadding)
+                )
             }
+        }
+
+        composable(
+            route = Screen.QuizDetail.route,
+            arguments = listOf(
+                navArgument("quizId") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val quizId = backStackEntry.arguments?.getInt("quizId") ?: 0
+
+            QuizDetailScreen(
+                navController = navController,
+                quizId = quizId
+            )
         }
 
         composable(Screen.Settings.route) {
